@@ -216,7 +216,7 @@ A sample encoding is obtained using SHA1-SAT (https://github.com/vegard/sha1-sat
 
 CNFGen can be used to define . Equivalent definitions  can also be added manually to <vn_original.cnf> as comments.
 
-    cnfgen define -vM {{ "{{" }}}}32/32/-1}/16/32} -vH {2752/32/-1}/5/32 vn_original.cnf vn_cnfgen.cnf
+    cnfgen define -vM {{ "{{" }}32/32/-1}/16/32} -vH {2752/32/-1}/5/32 vn_original.cnf vn_cnfgen.cnf
             
 Subsequently, assigning a message ("CNFGen" padded for SHA-1) yields its hash value.
 
@@ -224,7 +224,7 @@ Subsequently, assigning a message ("CNFGen" padded for SHA-1) yields its hash va
 
 Other possible variable assignments, note that variable numbers are original to the encoding, might change after optimizations:
 
-    var W = {{ "{{" }}}}32/32/-1}/16/32, {543/31/-1, 544}/64/32}
+    var W = {{ "{{" }}32/32/-1}/16/32, {543/31/-1, 544}/64/32}
     var A = {2912/32/-1}/80/32
 
 ## Acknowledgements & References
