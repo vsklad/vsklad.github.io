@@ -230,14 +230,14 @@ Other possible variable assignments, note that variable numbers are original to 
 ## Acknowledgements & References
 CNFGen is partly inspired by earlier work done by several researchers and builds on it.
 
-1. Johanovic et al, 2005, http://csl.sri.com/users/dejan/papers/jovanovic-hashsat-2005.pdf
-2. Marjin Heule, 2008, https://repository.tudelft.nl/islandora/object/uuid%3Ad41522e3-690a-4eb7-a352-652d39d7ac81
-3. Norbert Manthey, 2011, https://www.researchgate.net/publication/51934532_Coprocessor_-_a_Standalone_SAT_Preprocessor
-4. Vegard Nossum, 2012, https://www.duo.uio.no/handle/10852/34912
-5. Legendre et al., 2014, https://eprint.iacr.org/2014/239.pdf
-6. Nejati et al., 2016, https://www.researchgate.net/publication/306226194_Adaptive_Restart_and_CEGAR-based_Solver_for_Inverting_Cryptographic_Hash_Functions
-7. Motara, Irving, 2017, https://researchspace.csir.co.za/dspace/bitstream/handle/10204/9692/Motara_19661_2017.pdf?sequence=1&isAllowed=y
-8. Robert Brayton, Espresso Logic Minimizer, https://en.wikipedia.org/wiki/Espresso_heuristic_logic_minimizer
+1. Johanovic et al, 2005, <http://csl.sri.com/users/dejan/papers/jovanovic-hashsat-2005.pdf>
+2. Marjin Heule, 2008, <https://repository.tudelft.nl/islandora/object/uuid%3Ad41522e3-690a-4eb7-a352-652d39d7ac81>
+3. Norbert Manthey, 2011, <https://www.researchgate.net/publication/51934532_Coprocessor_-_a_Standalone_SAT_Preprocessor>
+4. Vegard Nossum, 2012, <https://www.duo.uio.no/handle/10852/34912>
+5. Legendre et al., 2014, <https://eprint.iacr.org/2014/239.pdf>
+6. Nejati et al., 2016, <https://www.researchgate.net/publication/306226194_Adaptive_Restart_and_CEGAR-based_Solver_for_Inverting_Cryptographic_Hash_Functions>
+7. Motara, Irving, 2017, <https://researchspace.csir.co.za/dspace/bitstream/handle/10204/9692/Motara_19661_2017.pdf?sequence=1&isAllowed=y>
+8. Robert Brayton, Espresso Logic Minimizer, <https://en.wikipedia.org/wiki/Espresso_heuristic_logic_minimizer>
 
 CNFGen does not reuse any pre-existing source code.
 The encodings are substantially more compact as measured by number of variables and clauses, than other published SHA-1 and SHA-256 encodings known to the author.
