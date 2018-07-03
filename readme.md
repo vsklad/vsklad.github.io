@@ -224,7 +224,7 @@ Subsequently, assigning a message ("CNFGen" padded for SHA-1) yields its hash va
 
 Other possible variable assignments, note that variable numbers are original to the encoding, might change after optimizations:
 
-    var W = {{32/32/-1}/16/32, {543/31/-1, 544}/64/32}
+    var W = &#123;&#123;32/32/-1}/16/32, {543/31/-1, 544}/64/32}
     var A = {2912/32/-1}/80/32
 
 ## Acknowledgements & References
