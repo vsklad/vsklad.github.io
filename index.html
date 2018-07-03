@@ -1,0 +1,224 @@
+<html><head><style>body {
+   color: black;
+}
+</style></head><body><h1 id="cnfgen">CNFGen</h1>
+<p>CNFGen is a tool for encoding SHA-1 and SHA-256 hash functions into CNF in DIMACS format.</p>
+<p>The tool generates compact optimized <a href="http://www.satcompetition.org/2009/format-benchmarks2009.html">DIMACS</a> encodings of SHA1 hash function.</p>
+<p>Project page: <a href="https://cnfgen.sophisticatedways.net">https://cnfgen.sophisticatedways.net</a>
+Source code is published under MIT license.
+Source code is available on GitHub: <a href="https://github.com/vsklad/cnfgen">https://github.com/vsklad/cnfgen</a></p>
+<h2 id="description">Description</h2>
+<p>CNFGen is built to make it easier to analyse CNF SAT problems through manipulation of their DIMACS representation. SHA-1/SHA-2 (SHA) encodings are chosen as a reference/example implementation. The tool generates DIMACS files for SHA algorithms with different assignments of both message and hash values. Design of the tool is not limited to these algorithms.</p>
+<p>Beyond encoding techniques, CNFGen implements recursive unit propagation and elimination of equivalences. This way, it is a simple SAT preprocessor similar to <a href="http://minisat.se/SatELite.html">SatELite</a> and <a href="http://tools.computational-logic.org/content/riss.php">Coprocessor</a>. At the  same time, CNFGen does not implement any variant of <a href="https://en.wikipedia.org/wiki/DPLL_algorithm">DPLL algorithm</a> and does not guess any variable values.</p>
+<p>CNFGen implements three notable features.</p>
+<h3 id="compact-encoding">Compact encoding</h3>
+<p>The encoding is optimized to minimize both number of variables and number of clauses. The assumption is that with redundancies removed, it may be easier to assess the problem&#39;s complexity and structure. Application of the below techniques results in substantially more compact encodings than those published to date and known to the author.</p>
+<ol>
+<li>new variables are introduced only when necessary during encoding, e.g. no additional variables are needed for rotation and negation</li>
+<li>all logical operations/primitives are encoded in the most efficient possible way</li>
+<li>every combination of bitwise n-nary addition is statically optimized using <a href="https://en.wikipedia.org/wiki/Espresso_heuristic_logic_minimizer">Espresso Logic Minimizer</a>, as a set of pre-defined clauses. This includes simlifications when one or more operands are constants</li>
+<li>any resultant constant values are optimized away during encoding; e.g. x ^ ~x is  optimized as 1</li>
+<li>recursive unit propagation and elimination of equivalences while assigning variables for an existing encoding</li>
+</ol>
+<h3 id="named-variables">Named variables</h3>
+<p>A set of literals and constants can be grouped and given a name.  For example, a hash value is a set of 160 literals and constants, depending on encoding parameters.
+Such &quot;named variable&quot; may change throughout subsequent manipilations. CNFGen tracks these changes. Further, CNFGen looks for internal structure when a large number of binary variables is grouped together, to produce the most compact representation. For example, {1/32/1}/16/32 describes a set of 16 32-bit words with 512 variables corresponding sequentially to each bit. These descriptions are stored within the DIMACS file as specially formatted comments.
+For a SHA encoding, at least two variables are defined, M for message and H for the hash value.</p>
+<p>CNFGen allows specifying named variable definitions and values via command line. While is possible to do the same by editing the DIMACS file, CNFGen perform basic valudation of the input. In particular, CNFGen supports:</p>
+<ol>
+<li>use of binary, hexadecimal and character-sequence constants (with bits mapped to binary variables) </li>
+<li>setting of specific bits/binary variables of the named variable</li>
+<li>specifying random binary values</li>
+<li>padding 1-block SHA messages</li>
+</ol>
+<h3 id="assignment-of-parameters">Assignment of parameters</h3>
+<p>CNFGen supports three modes of setting SHA parameters. It is possible to assign incrementally, i.e. assign more binary variables in the same DIMACS file each time, analysing the impact.</p>
+<ol>
+<li>setting a number of randomly chosen variables to random values</li>
+<li>setting some or all bits/bytes of the message and/or hash value to pre-defined constants</li>
+<li>computing hash value given a constant message, then assigning it along with partially assigned messge</li>
+</ol>
+<h2 id="usage">Usage</h2>
+<h3 id="build">Build</h3>
+<p>Source code is hosted at GitHub. To obtain and build:</p>
+<pre><code>git <span class="hljs-keyword">clone</span> <span class="hljs-title">https</span>://github.com/vsklad/cnfgen
+make
+</code></pre><h3 id="run">Run</h3>
+<p>To run the tool please launch &quot;./cnfgen&quot; for OSX/Linux and &quot;cnfgen.exe&quot; for Windows.</p>
+<h3 id="command-line">Command Line</h3>
+<p>The tool supports the following parameters:</p>
+<pre><code>cnfgen encode (SHA1|SHA256) [-r &lt;rounds&gt;] [-v &lt;<span class="hljs-built_in">name</span>&gt; &lt;value&gt;]... [&lt;encoder options&gt;] &lt;output <span class="hljs-built_in">file</span> <span class="hljs-built_in">name</span>&gt;
+cnfgen (assign | define) [-v &lt;<span class="hljs-built_in">name</span>&gt; &lt;value&gt;]... &lt;input <span class="hljs-built_in">file</span> <span class="hljs-built_in">name</span>&gt; &lt;output <span class="hljs-built_in">file</span> <span class="hljs-built_in">name</span>&gt;
+cnfgen <span class="hljs-comment">--help</span>
+cnfgen <span class="hljs-comment">--version</span>
+
+Commands
+    encode (SHA1|SHA256) - generate <span class="hljs-keyword">the</span> encoding <span class="hljs-keyword">and</span> 
+        save <span class="hljs-keyword">it</span> <span class="hljs-keyword">in</span> DIMACS format <span class="hljs-keyword">to</span> <span class="hljs-keyword">the</span> specified &lt;output <span class="hljs-built_in">file</span> <span class="hljs-built_in">name</span>&gt;
+        can generate <span class="hljs-keyword">the</span> encoding <span class="hljs-keyword">for</span> specified <span class="hljs-built_in">number</span> <span class="hljs-keyword">of</span> rounds (-r option),
+        also partialy <span class="hljs-keyword">or</span> fully assign <span class="hljs-keyword">the</span> message <span class="hljs-keyword">and</span> hash values (-v option)
+    assign - <span class="hljs-built_in">read</span> &lt;input <span class="hljs-built_in">file</span> <span class="hljs-built_in">name</span>&gt;, assign variables <span class="hljs-keyword">as</span> specified <span class="hljs-keyword">and</span> save <span class="hljs-keyword">it</span> <span class="hljs-keyword">to</span> &lt;output <span class="hljs-built_in">file</span> <span class="hljs-built_in">name</span>&gt;
+        requires input <span class="hljs-built_in">file</span> <span class="hljs-keyword">in</span> DIMACS format produced <span class="hljs-keyword">by</span> <span class="hljs-keyword">the</span> same tool
+        this <span class="hljs-keyword">is</span> due <span class="hljs-keyword">to</span> variable specifications encoded <span class="hljs-keyword">as</span> DIMACS comments
+        these variable specificatiosn may be added <span class="hljs-keyword">to</span> an externally produced <span class="hljs-built_in">file</span>
+        using <span class="hljs-keyword">the</span> &lt;define&gt; command
+    define - define one <span class="hljs-keyword">or</span> more named variables
+        accepts any DIMACS files, including those produced <span class="hljs-keyword">by</span> other means
+        records variable definitions <span class="hljs-keyword">in</span> <span class="hljs-keyword">the</span> output <span class="hljs-built_in">file</span> <span class="hljs-keyword">as</span> DIMACS comments
+        <span class="hljs-string">"random"</span>, <span class="hljs-string">"compute"</span> <span class="hljs-keyword">and</span> <span class="hljs-string">"except"</span> options are <span class="hljs-keyword">not</span> supported within variable definitions
+
+Options
+    -v &lt;<span class="hljs-built_in">name</span>&gt; &lt;value&gt;
+        specification <span class="hljs-keyword">of</span> <span class="hljs-keyword">the</span> named variable, 
+        <span class="hljs-keyword">its</span> mapping <span class="hljs-keyword">to</span> binary variables <span class="hljs-keyword">and</span>/<span class="hljs-keyword">or</span> <span class="hljs-keyword">its</span> <span class="hljs-built_in">constant</span> values
+        named variable <span class="hljs-keyword">is</span> a sequence <span class="hljs-keyword">of</span> CNF literals <span class="hljs-keyword">and</span> constants represented <span class="hljs-keyword">with</span> bits
+        named variable definitions are recorded <span class="hljs-keyword">in</span> <span class="hljs-keyword">the</span> <span class="hljs-string">"var"</span> statements 
+        <span class="hljs-keyword">in</span> comments within <span class="hljs-keyword">the</span> DIMACS <span class="hljs-built_in">file</span>
+
+        &lt;<span class="hljs-built_in">name</span>&gt; <span class="hljs-keyword">is</span> <span class="hljs-keyword">the</span> <span class="hljs-built_in">name</span> <span class="hljs-keyword">of</span> <span class="hljs-keyword">the</span> variable, case sensitive
+            may <span class="hljs-keyword">contain</span> <span class="hljs-built_in">characters</span> '<span class="hljs-number">0</span>'..'<span class="hljs-number">1</span>', 'a'..'z', 'A'..'Z', '_'
+            <span class="hljs-keyword">first</span> symbol may <span class="hljs-keyword">not</span> be a digit
+            an option <span class="hljs-keyword">with</span> <span class="hljs-keyword">the</span> particular variable may only appear once
+        &lt;value&gt; <span class="hljs-keyword">is</span> <span class="hljs-keyword">the</span> variable value <span class="hljs-keyword">or</span> specification
+            <span class="hljs-built_in">constant</span> binary variables may be grouped <span class="hljs-keyword">into</span> bytes
+            <span class="hljs-keyword">and</span> further represented <span class="hljs-keyword">as</span> a <span class="hljs-built_in">string</span>, a hexadecinal <span class="hljs-keyword">or</span> binary <span class="hljs-built_in">number</span>
+            sequential representation can be further optimized <span class="hljs-keyword">as</span> <span class="hljs-keyword">below</span>
+            <span class="hljs-keyword">if</span> a value includes spaces, <span class="hljs-keyword">it</span> must surrounded <span class="hljs-keyword">with</span> double-quotes
+            <span class="hljs-keyword">to</span> allow <span class="hljs-keyword">the</span> shell process <span class="hljs-keyword">it</span> <span class="hljs-keyword">as</span> a single argument
+        supported specifications:
+            &lt;value&gt; = ((&lt;hex_value&gt; | &lt;bin_value&gt; | &lt;str_value&gt; | &lt;var_value&gt;) [&lt;pad&gt;][&lt;except_range&gt;]) | 
+                 &lt;rnd_value&gt; | compute
+            &lt;hex_value&gt; = <span class="hljs-number">0</span>x['<span class="hljs-number">0</span>'..'<span class="hljs-number">9</span>', 'a'..'f', 'A'..'F']...
+                a big endian hexadecimal <span class="hljs-built_in">constant</span>
+            &lt;bin_value&gt; = <span class="hljs-number">0</span>b['<span class="hljs-number">0</span>'..'<span class="hljs-number">1</span>']...
+                a big endina binary <span class="hljs-built_in">constant</span>
+            &lt;str_value&gt; = ([\<span class="hljs-number">0x21</span>..\<span class="hljs-number">0x7F</span>]... | <span class="hljs-string">"[\0x20..\0x7F]..."</span>) [&lt;pad&gt;][&lt;except_range&gt;]
+                an ASCII <span class="hljs-built_in">string</span>, <span class="hljs-keyword">with</span> quotes <span class="hljs-keyword">if</span> includes <span class="hljs-literal">space</span>
+                big endian format <span class="hljs-keyword">is</span> assumed <span class="hljs-keyword">if</span> mapped <span class="hljs-keyword">to</span> <span class="hljs-built_in">word</span>(s)
+            &lt;rnd_value&gt; = random:&lt;<span class="hljs-built_in">number</span>&gt;
+                assigns &lt;<span class="hljs-built_in">number</span>&gt; <span class="hljs-keyword">of</span> binary variables (bits) <span class="hljs-keyword">to</span> random values
+                binary variables (bits) are chosen randomly <span class="hljs-keyword">as</span> well
+                &lt;<span class="hljs-built_in">number</span>&gt; must be <span class="hljs-keyword">between</span> <span class="hljs-number">1</span> <span class="hljs-keyword">and</span> <span class="hljs-keyword">the</span> total <span class="hljs-built_in">number</span> <span class="hljs-keyword">of</span> binary variables
+            compute
+                <span class="hljs-keyword">the</span> value <span class="hljs-keyword">is</span> computed <span class="hljs-keyword">and</span> <span class="hljs-keyword">the</span> formula <span class="hljs-keyword">is</span> produced <span class="hljs-keyword">as</span> follows:
+                <span class="hljs-number">1.</span> assign other variables <span class="hljs-keyword">to</span> <span class="hljs-keyword">the</span> specified <span class="hljs-built_in">constant</span> values <span class="hljs-keyword">without</span> &lt;exclusion range&gt;
+                <span class="hljs-number">2.</span> determe <span class="hljs-keyword">the</span> computed value <span class="hljs-keyword">by</span> encoding/evaluating <span class="hljs-keyword">the</span> formula <span class="hljs-keyword">with</span> those assignments
+                <span class="hljs-number">3.</span> encode <span class="hljs-keyword">the</span> formula <span class="hljs-keyword">with</span> all variables <span class="hljs-keyword">and</span> &lt;except_range&gt;
+            &lt;pad&gt; = pad:(SHA1 | SHA256)
+                <span class="hljs-keyword">the</span> variable treated <span class="hljs-keyword">as</span> a SHA<span class="hljs-number">-1</span>/SHA<span class="hljs-number">-256</span> message <span class="hljs-keyword">and</span> <span class="hljs-keyword">is</span> padded accordingly
+            &lt;except_range&gt; = except:&lt;<span class="hljs-keyword">first</span>&gt;..&lt;<span class="hljs-keyword">last</span>&gt;
+                range <span class="hljs-keyword">of</span> binary positions/variables <span class="hljs-keyword">to</span> keep variable, 
+                i.e. ignore <span class="hljs-keyword">the</span> <span class="hljs-built_in">constant</span> assignment <span class="hljs-keyword">of</span>
+                one-based index, i.e. &lt;<span class="hljs-keyword">first</span>&gt; <span class="hljs-keyword">and</span> &lt;<span class="hljs-keyword">last</span>&gt; must be <span class="hljs-keyword">between</span> <span class="hljs-number">1</span> <span class="hljs-keyword">and</span> <span class="hljs-keyword">the</span> size <span class="hljs-keyword">of</span> <span class="hljs-keyword">the</span> variable
+
+            &lt;var_value&gt; = (&lt;literal&gt; | &lt;hex_value&gt; | &lt;bin_value&gt;)[&lt;sequence_clause&gt;]
+            &lt;var_value&gt; = <span class="hljs-string">"{"</span> &lt;var_value&gt; [<span class="hljs-string">","</span> &lt;var_value&gt;]...<span class="hljs-string">"}"</span>[&lt;sequence_clause&gt;] 
+                defines a named variable <span class="hljs-keyword">by</span> describing a <span class="hljs-keyword">set</span> <span class="hljs-keyword">of</span> literals <span class="hljs-keyword">and</span> constants
+            &lt;sequence_clause&gt; = <span class="hljs-string">"/"</span>&lt;<span class="hljs-built_in">count</span>&gt;[<span class="hljs-string">"/"</span>&lt;step&gt;]
+                defines a sequence <span class="hljs-keyword">where</span> <span class="hljs-keyword">the</span> <span class="hljs-keyword">first</span> <span class="hljs-built_in">item</span> <span class="hljs-keyword">is</span> associated &lt;var_value&gt;
+                there are &lt;<span class="hljs-built_in">count</span>&gt; elements <span class="hljs-keyword">in</span> <span class="hljs-keyword">the</span> sequence
+                each subsequent <span class="hljs-built_in">item</span> <span class="hljs-keyword">is</span> produced <span class="hljs-keyword">by</span> adding &lt;step&gt; <span class="hljs-keyword">to</span> <span class="hljs-keyword">the</span> previous one
+                <span class="hljs-keyword">for</span> compound items, <span class="hljs-keyword">the</span> same &lt;step&gt; applies <span class="hljs-keyword">to</span> <span class="hljs-keyword">every</span> literal within <span class="hljs-keyword">the</span> <span class="hljs-built_in">item</span>
+
+    -r &lt;value&gt;
+        <span class="hljs-built_in">number</span> <span class="hljs-keyword">of</span> SHA1 rounds <span class="hljs-keyword">to</span> encode
+        <span class="hljs-keyword">the</span> value mut be <span class="hljs-keyword">between</span> <span class="hljs-number">1</span> <span class="hljs-keyword">and</span> <span class="hljs-number">80</span>, defaults <span class="hljs-keyword">to</span> <span class="hljs-number">80</span> <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> specified
+
+    -h | <span class="hljs-comment">--help</span>
+        output parameters/usage specification
+
+    <span class="hljs-comment">--version</span>
+        output <span class="hljs-built_in">version</span> <span class="hljs-built_in">number</span> <span class="hljs-keyword">of</span> <span class="hljs-keyword">the</span> tool
+
+    &lt;encoder options&gt; [<span class="hljs-comment">--add_max_args=&lt;value&gt;] [--xor_max_args=&lt;value&gt;]</span>
+        these options define how <span class="hljs-keyword">the</span> encoder processes addition <span class="hljs-keyword">and</span> xor's <span class="hljs-keyword">for</span> multiple operands
+        maximal <span class="hljs-built_in">number</span> <span class="hljs-keyword">of</span> binary variables <span class="hljs-keyword">to</span> be encoded together, plus <span class="hljs-keyword">the</span> <span class="hljs-literal">result</span>
+        any constants are optimized out when encoding <span class="hljs-keyword">and</span> are outside this <span class="hljs-built_in">number</span> 
+        &lt;add_max_args&gt; <span class="hljs-keyword">is</span> a <span class="hljs-built_in">number</span> <span class="hljs-keyword">between</span> <span class="hljs-number">2</span> <span class="hljs-keyword">and</span> <span class="hljs-number">6</span>, <span class="hljs-number">3</span> <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> specified
+            defines maximal <span class="hljs-built_in">number</span> <span class="hljs-keyword">of</span> binary variables <span class="hljs-keyword">to</span> be added together
+        &lt;xor_max_args&gt; <span class="hljs-keyword">is</span> a <span class="hljs-built_in">number</span> <span class="hljs-keyword">between</span> <span class="hljs-number">2</span> <span class="hljs-keyword">and</span> <span class="hljs-number">10</span>, <span class="hljs-number">3</span> <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> specified
+            defines maximal <span class="hljs-built_in">number</span> <span class="hljs-keyword">of</span> binary variables <span class="hljs-keyword">to</span> be xor'ed together
+</code></pre><h3 id="pre-defined-variables">Pre-defined Variables</h3>
+<p>Two variables are pre-defined for SHA-1 and SHA-256.</p>
+<pre><code>    M - message, <span class="hljs-keyword">a</span> sequence <span class="hljs-keyword">of</span> up <span class="hljs-built_in">to</span> <span class="hljs-number">55</span> <span class="hljs-keyword">bytes</span> (<span class="hljs-number">440</span> bits) due <span class="hljs-built_in">to</span> self-imposed <span class="hljs-number">1</span> block limitation
+        ASCII/hexadecimal <span class="hljs-built_in">constant</span> is padded according <span class="hljs-built_in">to</span> SHA1 specification
+        <span class="hljs-built_in">random</span> assignments are <span class="hljs-keyword">not</span> padded
+        <span class="hljs-keyword">the</span> <span class="hljs-built_in">value</span> is used <span class="hljs-keyword">for</span> encoding, i.e.
+        <span class="hljs-keyword">the</span> formula is produced <span class="hljs-keyword">for</span> <span class="hljs-keyword">the</span> specified <span class="hljs-built_in">value</span> originally, <span class="hljs-keyword">with</span> maximal optimization
+    H - hash <span class="hljs-built_in">value</span>, <span class="hljs-keyword">a</span> <span class="hljs-built_in">set</span> <span class="hljs-keyword">of</span> <span class="hljs-number">160</span> bits <span class="hljs-keyword">for</span> SHA<span class="hljs-number">-1</span> grouped <span class="hljs-keyword">into</span> <span class="hljs-number">5</span> <span class="hljs-number">32</span>-bit <span class="hljs-keyword">words</span>, 
+        <span class="hljs-number">256</span> bits <span class="hljs-keyword">and</span> <span class="hljs-number">8</span> <span class="hljs-keyword">words</span> <span class="hljs-keyword">for</span> SHA<span class="hljs-number">-256</span> respectively
+        <span class="hljs-keyword">the</span> <span class="hljs-built_in">value</span> is assigned <span class="hljs-keyword">after</span> <span class="hljs-keyword">with</span> UIP <span class="hljs-keyword">and</span> euqivalences optimizations
+</code></pre><h2 id="examples">Examples</h2>
+<ol>
+<li><p>Generate a generic SHA1 encoding without any message or hash value assigned</p>
+<pre><code> <span class="hljs-selector-tag">encode</span> <span class="hljs-selector-tag">SHA1</span> <span class="hljs-selector-tag">sha1</span><span class="hljs-selector-class">.cnf</span>
+</code></pre></li>
+<li><p>Evaluate <sha1.cnf> with &quot;CNFGen&quot; ASCII string as a message, output hash value. 
+ <sha1H.cnf> is empty since the formula is fully evaluated/satisfied</p>
+<pre><code> <span class="hljs-selector-tag">assign</span> <span class="hljs-selector-tag">-vM</span> <span class="hljs-selector-tag">string</span><span class="hljs-selector-pseudo">:CNFGen</span> <span class="hljs-selector-tag">pad</span><span class="hljs-selector-pseudo">:sha1</span> <span class="hljs-selector-tag">sha1</span><span class="hljs-selector-class">.cnf</span> <span class="hljs-selector-tag">sha1H</span><span class="hljs-selector-class">.cnf</span>
+</code></pre></li>
+<li><p>Evaluate sha1.cnf with &quot;CNFGen&quot; ASCII string as a message, 
+ compute hash value then assign it to <sha1.cnf> and store the result to sha1H.cnf</p>
+<pre><code> <span class="hljs-selector-tag">assign</span> <span class="hljs-selector-tag">-vM</span> <span class="hljs-selector-tag">string</span><span class="hljs-selector-pseudo">:CNFGen</span> <span class="hljs-selector-tag">pad</span><span class="hljs-selector-pseudo">:sha1</span> <span class="hljs-selector-tag">except</span><span class="hljs-selector-pseudo">:1..512</span> <span class="hljs-selector-tag">-vH</span> <span class="hljs-selector-tag">compute</span> <span class="hljs-selector-tag">sha1</span><span class="hljs-selector-class">.cnf</span> <span class="hljs-selector-tag">sha1H</span><span class="hljs-selector-class">.cnf</span>
+</code></pre></li>
+<li><p>Assign hash value to sha1.cnf, result is equivalent to the previous example</p>
+<pre><code> assign -vH <span class="hljs-number">0</span>xa11f66f0e618011e6cfab657cb05c8fa7c23bc26 sha1<span class="hljs-selector-class">.cnf</span> sha1H<span class="hljs-selector-class">.cnf</span> 
+</code></pre></li>
+<li><p>Generate a SHA1 encoding with hash value assigned. 
+ Result is equivalent to the previous example.</p>
+<pre><code> <span class="hljs-selector-tag">encode</span> <span class="hljs-selector-tag">SHA1</span> <span class="hljs-selector-tag">-vH</span> 0<span class="hljs-selector-tag">xa11f66f0e618011e6cfab657cb05c8fa7c23bc26</span> <span class="hljs-selector-tag">sha1H</span><span class="hljs-selector-class">.cnf</span>
+</code></pre></li>
+<li><p>Generate SHA1 encoding for the given ASCII string as a message
+ with hash value computed and assigned
+ and with the first 8 bits of the message left as variables.</p>
+<pre><code> <span class="hljs-selector-tag">encode</span> <span class="hljs-selector-tag">SHA1</span> <span class="hljs-selector-tag">-vM</span> <span class="hljs-selector-tag">string</span><span class="hljs-selector-pseudo">:CNFGen</span> <span class="hljs-selector-tag">except</span><span class="hljs-selector-pseudo">:1..8</span> <span class="hljs-selector-tag">-vH</span> <span class="hljs-selector-tag">compute</span> <span class="hljs-selector-tag">sha1</span><span class="hljs-selector-class">.cnf</span>
+</code></pre></li>
+<li><p>Generate SHA1 encoding with both message and hash value set to random values
+ except for the random 8 bits of the message are kept as variables</p>
+<pre><code> <span class="hljs-selector-tag">encode</span> <span class="hljs-selector-tag">SHA1</span> <span class="hljs-selector-tag">-vM</span> <span class="hljs-selector-tag">random</span><span class="hljs-selector-pseudo">:504</span> <span class="hljs-selector-tag">-vH</span> <span class="hljs-selector-tag">random</span><span class="hljs-selector-pseudo">:160</span> <span class="hljs-selector-tag">sha1_random</span><span class="hljs-selector-class">.cnf</span>
+</code></pre></li>
+</ol>
+<h2 id="verification">Verification</h2>
+<p>It is possible to verify the correctness of the resulting formula using the following techniques and the tool itself:</p>
+<ol>
+<li>generating SHA1 encoding with a particular message outputs its hash value<pre><code>     <span class="hljs-keyword">this</span> value can be verified <span class="hljs-keyword">using</span> any alternative SHA1 implementation
+     including those <span class="hljs-built_in">available</span> online, e.g. http:<span class="hljs-comment">//www.sha1-online.com/</span>
+</code></pre></li>
+<li>assigning a message to a previously generated SHA1 encoding outputs its hash value; the encoding may be:<ul>
+<li>fully unassigned, with all message and hash value bits as binary variables</li>
+<li>with some bits set beforehand using &quot;assign&quot; command</li>
+<li>with full hash value set beforehand using &quot;assign&quot; command<ul>
+<li>assigning the correct message will output SATISFIABLE</li>
+<li>assigning a conflicting message will result in a CONFLICT</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="example">Example</h3>
+<p>A sample encoding is obtained using SHA1-SAT (<a href="https://github.com/vegard/sha1-sat">https://github.com/vegard/sha1-sat</a>) with the following parameters:</p>
+<pre><code><span class="hljs-comment">sha1</span><span class="hljs-literal">-</span><span class="hljs-comment">sat</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">cnf</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">tseitin</span><span class="hljs-literal">-</span><span class="hljs-comment">adders</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">message</span><span class="hljs-literal">-</span><span class="hljs-comment">bits=0</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">hash</span><span class="hljs-literal">-</span><span class="hljs-comment">bits=0</span> &gt; <span class="hljs-comment">vn_original</span><span class="hljs-string">.</span><span class="hljs-comment">cnf</span>
+</code></pre><p>CNFGen can be used to define . Equivalent definitions  can also be added manually to <vn_original.cnf> as comments.</p>
+<pre><code>cnfgen define -vM {{<span class="hljs-number">32</span>/<span class="hljs-number">32</span>/<span class="hljs-number">-1</span>}/<span class="hljs-number">16</span>/<span class="hljs-number">32</span>} -vH {<span class="hljs-number">2752</span>/<span class="hljs-number">32</span>/<span class="hljs-number">-1</span>}/<span class="hljs-number">5</span>/<span class="hljs-number">32</span> vn_original.cnf vn_cnfgen.cnf
+</code></pre><p>Subsequently, assigning a message (&quot;CNFGen&quot; padded for SHA-1) yields its hash value.</p>
+<pre><code><span class="hljs-selector-tag">cnfgen</span> <span class="hljs-selector-tag">assign</span> <span class="hljs-selector-tag">-vM</span> <span class="hljs-selector-tag">string</span><span class="hljs-selector-pseudo">:CNFGen</span> <span class="hljs-selector-tag">pad</span><span class="hljs-selector-pseudo">:sha1</span> <span class="hljs-selector-tag">vn_cnfgen</span><span class="hljs-selector-class">.cnf</span> <span class="hljs-selector-tag">vn_evaluated</span><span class="hljs-selector-class">.cnf</span>
+</code></pre><p>Other possible variable assignments, note that variable numbers are original to the encoding, might change after optimizations:</p>
+<pre><code>var W = {{<span class="hljs-number">32</span>/<span class="hljs-number">32</span>/<span class="hljs-number">-1</span>}/<span class="hljs-number">16</span>/<span class="hljs-number">32</span>, {<span class="hljs-number">543</span>/<span class="hljs-number">31</span>/<span class="hljs-number">-1</span>, <span class="hljs-number">544</span>}/<span class="hljs-number">64</span>/<span class="hljs-number">32</span>}
+var A = {<span class="hljs-number">2912</span>/<span class="hljs-number">32</span>/<span class="hljs-number">-1</span>}/<span class="hljs-number">80</span>/<span class="hljs-number">32</span>
+</code></pre><h2 id="acknowledgements-references">Acknowledgements &amp; References</h2>
+<p>CNFGen is partly inspired by earlier work done by several researchers and builds on it.</p>
+<ol>
+<li>Johanovic et al, 2005, <a href="http://csl.sri.com/users/dejan/papers/jovanovic-hashsat-2005.pdf">http://csl.sri.com/users/dejan/papers/jovanovic-hashsat-2005.pdf</a></li>
+<li>Marjin Heule, 2008, <a href="https://repository.tudelft.nl/islandora/object/uuid%3Ad41522e3-690a-4eb7-a352-652d39d7ac81">https://repository.tudelft.nl/islandora/object/uuid%3Ad41522e3-690a-4eb7-a352-652d39d7ac81</a></li>
+<li>Norbert Manthey, 2011, <a href="https://www.researchgate.net/publication/51934532_Coprocessor_-_a_Standalone_SAT_Preprocessor">https://www.researchgate.net/publication/51934532_Coprocessor_-_a_Standalone_SAT_Preprocessor</a></li>
+<li>Vegard Nossum, 2012, <a href="https://www.duo.uio.no/handle/10852/34912">https://www.duo.uio.no/handle/10852/34912</a></li>
+<li>Legendre et al., 2014, <a href="https://eprint.iacr.org/2014/239.pdf">https://eprint.iacr.org/2014/239.pdf</a></li>
+<li>Nejati et al., 2016, <a href="https://www.researchgate.net/publication/306226194_Adaptive_Restart_and_CEGAR-based_Solver_for_Inverting_Cryptographic_Hash_Functions">https://www.researchgate.net/publication/306226194_Adaptive_Restart_and_CEGAR-based_Solver_for_Inverting_Cryptographic_Hash_Functions</a></li>
+<li>Motara, Irving, 2017, <a href="https://researchspace.csir.co.za/dspace/bitstream/handle/10204/9692/Motara_19661_2017.pdf?sequence=1&amp;isAllowed=y">https://researchspace.csir.co.za/dspace/bitstream/handle/10204/9692/Motara_19661_2017.pdf?sequence=1&amp;isAllowed=y</a></li>
+<li>Robert Brayton, Espresso Logic Minimizer, <a href="https://en.wikipedia.org/wiki/Espresso_heuristic_logic_minimizer">https://en.wikipedia.org/wiki/Espresso_heuristic_logic_minimizer</a></li>
+</ol>
+<p>CNFGen does not reuse any pre-existing source code.
+The encodings are substantially more compact as measured by number of variables and clauses, than other published SHA-1 and SHA-256 encodings known to the author.</p>
+<h2 id="about">About</h2>
+<p>I developed this tool part of hobby reserach into SAT and cryptography.</p>
+</body></html>
